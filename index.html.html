@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Our Story & Memories</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100vw;
+      z-index: 1;
+    }
+
+    /* Glassmorphic Floating Header */
+    .top-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      pointer-events: auto;
+    }
+
+    .top-bar h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+
+    .top-bar p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* Quick Jump Pills */
+    .nav-pills {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 6px 10px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow-x: auto;
+      max-width: 92vw;
+      pointer-events: auto;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover, .nav-btn:active {
+      background: #e11d48;
+      color: #fff;
+      border-color: #e11d48;
+    }
+
+    /* Custom Map Marker */
+    .custom-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: #e11d48;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.6);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .custom-pin:hover {
+      transform: scale(1.15);
+    }
+
+    .custom-pin::after {
+      content: '♥';
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    /* Leaflet Popup Styling */
+    .leaflet-popup-content-wrapper {
+      background: rgba(15, 23, 42, 0.95) !important;
+      color: #f8fafc !important;
+      border-radius: 18px !important;
+      padding: 4px !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .leaflet-popup-tip {
+      background: rgba(15, 23, 42, 0.95) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .popup-card {
+      width: 280px;
+      padding: 8px;
+    }
+
+    .popup-media-wrap {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-media-wrap img, 
+    .popup-media-wrap video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .popup-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      color: #fb7185;
+      background: rgba(225, 29, 72, 0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .popup-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .popup-text {
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+
+    .popup-joke {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-style: italic;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Glass Header -->
+  <div class="top-bar">
+    <div>
+      <h1>Our Journey & Memories</h1>
+      <p>Tap a pin to unlock the story</p>
+    </div>
+  </div>
+
+  <!-- Bottom Quick Navigation -->
+  <div class="nav-pills" id="navPills">
+    <button class="nav-btn" onclick="fitAll()">Fit All</button>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 1. Initialize Map
+    const map = leaflet = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([52.0, -1.5], 7);
+
+    // 2. Add Dark Map Tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // 3. Your Personal Memories Data
+    const memories = [
+      {
+        title: "Your House!",
+        tag: "Milestone",
+        coords: [52.425965575883076, -2.2306457606128944],
+        file: "Your House.JPG",
+        isVideo: false,
+        text: "The first time I met your friends and family, it was so romantic and exciting but so nervewracking, for both of us, and I never remember spending so much money on a night out before!.",
+        joke: "Most expensive (and best) night out ever."
+      },
+      {
+        title: "Wales!",
+        tag: "Romantic Getaway",
+        coords: [52.70101770121494, -4.034339156888141],
+        file: "Wales!.JPG",
+        isVideo: false,
+        text: "Wow Wales is just the most romantic place in the world with you, and I truly did completely fall in love with you there, my heart still flips out even thinking about it and you just looked so beautiful, something that endlessly grows.",
+        joke: "Heart still flipping out every single day."
+      },
+      {
+        title: "Halloween!",
+        tag: "Fun & Giggles",
+        coords: [52.39743270252437, -1.5487384645872666],
+        file: "Halloween!.JPG",
+        isVideo: false,
+        text: "Wow Halloween was so fun, it made me so happy and excited and we had so many laughs together, so much giggling and happiness and I wouldn't have wanted it any other way (not to mention your sexy costume).",
+        joke: "Non-stop laughing and that costume..."
+      },
+      {
+        title: "Valentines!",
+        tag: "Live Photo / Video",
+        coords: [51.47914830738928, -0.29268487340477933],
+        file: "Valentines!.MOV",
+        isVideo: true,
+        text: "Valentine's Day where we went to Kew, and you are so much more beautiful than any of the plants that we saw there, and I absolutely loved that funny email about the chocolates.",
+        joke: "Still laughing at the chocolate email."
+      },
+      {
+        title: "HP World!",
+        tag: "Studio Tour",
+        coords: [51.6902895152214, -0.4181803606591592],
+        file: "HPWorld!.HEIC",
+        isVideo: false,
+        text: "Harry Potter world, I so want to go back there with you, it was incredible and fun and so nerdy, you're just bloody perfect and you bring so much magic to who we are hehe.",
+        joke: "Pure magic with you hehe."
+      },
+      {
+        title: "1 Year!",
+        tag: "Live Photo / Video",
+        coords: [51.501486532642915, -0.11938910296828181],
+        file: "1 Year!.MOV",
+        isVideo: true,
+        text: "1 year at Sea Life, our brilliant roundup of our first Sea Life date a year before, and just how much fun we have together no matter what we do.",
+        joke: "One year down, endless to go."
+      },
+      {
+        title: "Spain!",
+        tag: "Holiday",
+        coords: [37.91382740543296, -0.7281557638212828],
+        file: "Spain!.HEIC",
+        isVideo: false,
+        text: "Spain, and wow what fun did we have in Spain, perfect weather, perfect romance, perfect lady, it couldn't have been more perfect, and it so constantly reminds me that what we have is always evolving and growing, and it always makes me want more.",
+        joke: "Perfect weather, perfect romance, perfect lady."
+      }
+    ];
+
+    const markers = [];
+    const bounds = L.latLngBounds();
+    const navPills = document.getElementById('navPills');
+
+    // Custom Heart Pin Icon
+    const heartIcon = L.divIcon({
+      className: 'custom-pin',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18]
+    });
+
+    // 4. Place Markers & Build Popups
+    memories.forEach((mem, index) => {
+      bounds.extend(mem.coords);
+
+      // Render Video Tag if MOV, or Img Tag if HEIC / JPG
+      const mediaMarkup = mem.isVideo 
+        ? `<video controls playsinline muted loop autoplay preload="metadata">
+             <source src="${encodeURI(mem.file)}" type="video/quicktime">
+             <source src="${encodeURI(mem.file)}" type="video/mp4">
+             Your device cannot play this video format.
+           </video>`
+        : `<img src="${encodeURI(mem.file)}" alt="${mem.title}" loading="lazy">`;
+
+      const popupContent = `
+        <div class="popup-card">
+          <div class="popup-media-wrap">
+            ${mediaMarkup}
+          </div>
+          <span class="popup-tag">${mem.tag}</span>
+          <h2 class="popup-title">${mem.title}</h2>
+          <p class="popup-text">${mem.text}</p>
+          <div class="popup-joke">“${mem.joke}”</div>
+        </div>
+      `;
+
+      const marker = L.marker(mem.coords, { icon: heartIcon })
+        .addTo(map)
+        .bindPopup(popupContent, { maxWidth: 300 });
+
+      markers.push(marker);
+
+      // Create quick jump button in bottom bar
+      const btn = document.createElement('button');
+      btn.className = 'nav-btn';
+      btn.textContent = mem.title;
+      btn.onclick = () => {
+        map.flyTo(mem.coords, 14, { duration: 1.5 });
+        setTimeout(() => marker.openPopup(), 1200);
+      };
+      navPills.appendChild(btn);
+    });
+
+    // Fit view to include all points initially
+    function fitAll() {
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
+    }
+
+    fitAll();
+  </script>
+</body>
+</html>
