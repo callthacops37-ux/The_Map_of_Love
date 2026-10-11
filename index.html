@@ -242,9 +242,9 @@
     }).setView([52.0, -1.5], 7);
 
     // 2. Add Dark Map Tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19
-    }).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
 
     // 3. Your Personal Memories Data
     const memories = [
